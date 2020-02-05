@@ -37,6 +37,8 @@ class pyTiff(object):
         #leaving a default of wgs84
         self.epsg = 4326
 
+        #Qt tools take up a lot of space and can use
+        #a lot of runtime importing. 
         if QtTools == True:
 
             try:
@@ -49,8 +51,8 @@ class pyTiff(object):
 
         self.load_tif()
 
-        #Generate a world file if none is found
-
+        #Generate a world file if none is found.
+        #This still requires EXIF data to exist within the data
         self.worldfile = os.path.splitext(filename)[0] + ".tfw"
 
         self.meta = self.get_metadata(self.filename)
@@ -67,8 +69,9 @@ class pyTiff(object):
 
                 print("This image has no metadata.")
 
-        #print(self.geodetics)
-        
+    #Extract the metadata from a file.
+    #Used in the case that no tfw file exists with the data,
+    #but EXIF info is provided.
     def get_metadata(self, filename):
 
         image = open(filename, 'rb')
@@ -77,12 +80,17 @@ class pyTiff(object):
 
         return(tags)
 
+    #Loads the tif data into class variables.
+    #Note that the file itself is loaded once the object is instantiated,
+    #this function merely extracts the required data and saves it as
+    #class variables.
     def load_tif(self):
 
         tiff = self.tiff
-        
-        geodetics = tiff.GetProjection()[6:]
 
+        #Extract all the information required to position the data
+        geodetics = tiff.GetProjection()[6:]
+        
         for p in ['[', ']', '"']:
 
             geodetics = geodetics.replace(p, '')
@@ -103,6 +111,8 @@ class pyTiff(object):
 
         self.numberOfBands = tiff.RasterCount
 
+        #Iterate through each band and save them to a class variable.
+        #This results in a list of lists.
         for b in range(self.numberOfBands):
 
             b += 1
@@ -113,16 +123,20 @@ class pyTiff(object):
 
             self.bands.append(activeBand)
 
-        print(self.bands[0])
-
+    #Rescale the data to values between 0 and 1. This allows
+    #them to be easily converted later to uint8 (0-255) for the generation
+    #of images.
     def _rescale_image(self, arr):
 
         arr_range = (arr.min(), arr.max())
 
         return((arr - arr_range[0])/(arr_range[1] - arr_range[0]))
 
+    #Takes the exifread GPS position and converts it to decimal degrees.
     def _to_degrees(self, coord):
 
+        #The GPS position data has weird ratio values, so we have to convert
+        #them to float values (.num == numerator, .den == denominator
         degrees = float(coord.values[0].num) / float(coord.values[0].den)
         
         minutes = float(coord.values[1].num) / float(coord.values[1].den)
@@ -131,6 +145,9 @@ class pyTiff(object):
         
         return(degrees + (minutes / 60.0) + (seconds / 3600))
 
+    #Takes in a set of geographic coordinates (lat, lon) and converts them
+    #to x, y coordinates (meters).
+    #Defaults to WGS84, UTM 9N, Western hemisphere (Vancouver Island, BC)
     def geo_to_utm(self, lat, lon, utmzone=9, ellipse='WGS84', hemi='W'):
 
         longitude = lon * -1
@@ -142,18 +159,21 @@ class pyTiff(object):
 
         return((x2, y2))
 
+    #Generates a Pillow Image from the input data. This is primarily for preparing
+    #the dataset to be displayed in a QT application.
+    #Supports 1 band (greyscale) and 3 band (RGB) images.
     def image_from_bands(self, band1, band2 = None, band3 = None, save=True):
-            
+
+        #Get the dimensions of the array to be written to the image
         band_w = self.bands[band1].shape[0]
         
         band_h = self.bands[band1].shape[1]      
 
+        #Set up the filename for the output file.
+        #Filetype is locked into jpeg for now.
         filename = str(os.path.splitext(self.filename)[0]) + ".jpeg"
 
-        print("Height: %i, Width: %i" % (band_w, band_h))
-        print("Number of bands: %i" % self.numberOfBands)
-        print("X Corner: %i Y Corner: %i" % (self.x, self.y))
-        
+        #If only one band is entered, create a greyscale image
         if band2 == None or band3 == None:
 
             image = self._rescale_image(self.bands[band1]) * 255
@@ -164,6 +184,7 @@ class pyTiff(object):
 
             self.image = image
 
+        #If all three bands are entered, create an RGB image
         else:
 
             rgb_image = np.zeros((band_w, band_h, 3))
@@ -175,6 +196,8 @@ class pyTiff(object):
 
             self.image = image
 
+        #The data has been stored to a class variable, but can
+        #be output to a file if so desired.
         if save == True:
 
             self.image.save(filename)
@@ -182,78 +205,71 @@ class pyTiff(object):
     def show_data(self):
 
         self.image.show()
+       
+    #Takes a list containing the desired bands and outputs a tiff containing those bands
+        #ie. bands = [1,3,4,7] would output a 4 band tiff with bands 1,3,4, and 7.
+        #if bands == 0, all bands will be output 
+    def write_bands_to_tiff(self, bands, epsg=4326):
 
-    def write_array_to_tiff(self, band1, band2 = None, band3 = None, epsg=4326):
-
-        b = self.numberOfBands
-
+        #The filename which will be assigned to the new output file
         filename = str(os.path.splitext(self.filename)[0]) + ".proc.tif"
-        
+
+        #Initialize the GeoTiff file to which the data will be written to
         outRaster = gdal.GetDriverByName("GTiff").Create(filename,
                                                          self.bands[0].shape[1],
-                                                         self.bands[0].shape[0],
+                                                         self.bands[0].shape[1],
                                                          b, gdal.GDT_Float32)
 
+        #Apply offsets, rotations, and resolution to the dataset
         outRaster.SetGeoTransform(self.geoTransform)
 
+        #Initialize a spatial reference system
         srs = osr.SpatialReference()
 
+        #Using the EPSG code, add a reference system to the object
+        #This will default to WGS84
         srs.ImportFromEPSG(epsg)
 
+        #Apply the reference system to the tiff file
         outRaster.SetProjection(srs.ExportToWkt())
 
-        #the if statement is unneccesary 
-        if band2 == None or band3 == None:
+        #Add the array dataset to the tiff file
+        #If bands == 0, add all bands to the output tiff
+        #Otherwise, add the input bands only to the output tiff
+        if bands == 0:
 
-            outRaster.GetRasterBand(1).WriteArray(band1)
+            for x in range(self.numberOfBands):
+
+                x+=1
+
+                outRaster.GetRasterBand(x).WriteArray(self.bands[x-1])
 
         else:
 
-            for x in range(b):
+            for x in range(len(bands)):
 
                 x += 1
 
-                outRaster.GetRasterBand(x).WriteArray(self.bands[x-1])
-                
+                outRaster.GetRasterBand(x).WriteArray(self.bands[bands[x-1]])
+
+        #Dump the tiff data to a file.
         outRaster.FlushCache()
 
-    def write_bands_to_tiff(self, bands, epsg=4326):
-
-        b = len(bands)
-
-        filename = str(os.path.splitext(self.filename)[0]) + ".proc.tif"
-
-        outRaster = gdal.GetDriverByName("GTiff").Create(filename,
-                                                         self.bands[0].shape[1],
-                                                         self.bands[0].shape[1],
-                                                         b, gdal.GDT_Float32)
-
-        outRaster.SetGeoTransform(self.geoTransform)
-
-        srs = osr.SpatialReference()
-
-        srs.ImportFromEPSG(epsg)
-
-        outRaster.SetProjection(srs.ExportToWkt())
-
-        for x in range(b):
-
-            x += 1
-
-            outRaster.GetRasterBand(x).WriteArray(self.bands[bands[x-1]])
-
-        outRaster.FlushCache()
-
+    #Outputs a .tfw file to accompany a tif and provide georeferencing
     def make_world_file(self):
 
+        #Load the exif metadata
         metadata = self.meta
 
+        #Extract lat and lon from the metadata
         lat = self._to_degrees(metadata["GPS GPSLatitude"])
         
         lon = self._to_degrees(metadata["GPS GPSLongitude"])
 
+        #Convert the lat, lon to x, y coordinates
         x,y = self.geo_to_utm(lat, lon)
-        
+
+        #A .tfw requires the following ordered info: x resolution, rotation1, rotation2, y resolution, x, y
         alt = metadata["GPS GPSAltitude"]
         alt = float(alt.values[0].num) / float(alt.values[0].den)
         resx = self.cellSize[0]
@@ -261,6 +277,7 @@ class pyTiff(object):
         rot1 = self.rotations[0]
         rot2 = self.rotations[1]
 
+        #create the file and write the requried values to it
         with open(self.worldfile, 'a') as file:
 
             file.write(str(resx) + '\n' + str(rot1) + '\n' + str(rot2) + '\n' +
