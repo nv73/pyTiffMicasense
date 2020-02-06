@@ -6,3 +6,5 @@ IMG_0012_1.tif
 *.img
 *.tif
 *.jpeg
+*.ovr
+data/IMG_0012_1.tif.aux.xml

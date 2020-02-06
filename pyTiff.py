@@ -9,7 +9,7 @@ import spectral.io.envi as envi
 
 class pyTiff(object):
 
-    def __init__(self, filename, QtTools = False, hyperspectral=False):
+    def __init__(self, filename, QtTools = False, hyperspectral=False, overrideResolution=0):
 
         self.filename = filename
 
@@ -59,7 +59,15 @@ class pyTiff(object):
 
             self._load_tif()
 
-            self.get_world_file(self.filename)
+            if self.geoTransform[0] == 0.0:
+
+                self.meta = self.get_metadata(self.filename)
+
+                self.georeference_from_metadata()
+
+            if overrideResolution > 0:
+
+                self.cellSize == overRideResolution
 
         else:
 
@@ -68,27 +76,6 @@ class pyTiff(object):
             self._load_hyperspectral(headerfilename, filename)
 
             self._decode_envi_header(headerfilename)
-
-    #checks for a world file (.tfw). Creates one if none exist.
-    def get_world_file(self, filename):
-
-        fname = str(filename)
-        
-        self.worldfile = os.path.splitext(filename[0] + ".tfw")
-
-        self.meta = self.get_metadata(filename)
-
-        filepath = '\\'.join(filename.split('\\')[0:-1])
-
-        if os.path.basename(str(self.worldfile)) not in os.listdir(filepath):
-
-            try:
-
-                self._make_world_file()
-
-            except:
-
-                pass
             
     #Extract the metadata from a file.
     #Used in the case that no tfw file exists with the data,
@@ -121,6 +108,8 @@ class pyTiff(object):
         self.geodetics = geodetics
 
         self.geoTransform = tiff.GetGeoTransform()
+
+        print(self.geoTransform)
 
         self.x = self.geoTransform[0]
 
@@ -239,6 +228,14 @@ class pyTiff(object):
         #if bands == 0, all bands will be output 
     def write_bands_to_tiff(self, bands, epsg=4326):
 
+        if bands == 0:
+
+            bandLength = 1
+
+        else:
+
+            bandLength = len(bands)
+
         #The filename which will be assigned to the new output file
         filename = str(os.path.splitext(self.filename)[0]) + ".proc.tif"
 
@@ -246,9 +243,10 @@ class pyTiff(object):
         outRaster = gdal.GetDriverByName("GTiff").Create(filename,
                                                          self.bands[0].shape[1],
                                                          self.bands[0].shape[0],
-                                                         len(bands), gdal.GDT_UInt16)
+                                                         bandLength, gdal.GDT_UInt16)
 
         #Apply offsets, rotations, and resolution to the dataset
+        print(self.geoTransform)
         outRaster.SetGeoTransform(self.geoTransform)
         
         #Initialize a spatial reference system
@@ -283,33 +281,19 @@ class pyTiff(object):
         #Dump the tiff data to a file.
         outRaster.FlushCache()
 
-    #Outputs a .tfw file to accompany a tif and provide georeferencing
-    def _make_world_file(self):
+    def georeference_from_metadata(self):
 
-        #Load the exif metadata
         metadata = self.meta
 
-        #Extract lat and lon from the metadata
         lat = self._to_degrees(metadata["GPS GPSLatitude"])
-        
         lon = self._to_degrees(metadata["GPS GPSLongitude"])
 
-        #Convert the lat, lon to x, y coordinates
         x,y = self.geo_to_utm(lat, lon)
 
-        #A .tfw requires the following ordered info: x resolution, rotation1, rotation2, y resolution, x, y
-        alt = metadata["GPS GPSAltitude"]
-        alt = float(alt.values[0].num) / float(alt.values[0].den)
-        resx = self.cellSize[0]
-        resy = self.cellSize[1]
-        rot1 = self.rotations[0]
-        rot2 = self.rotations[1]
+        self.x = x
+        self.y = y
 
-        #create the file and write the requried values to it
-        with open(self.worldfile, 'a') as file:
-
-            file.write(str(resx) + '\n' + str(rot1) + '\n' + str(rot2) + '\n' +
-                       str(resy) + '\n' + str(x) + '\n' + str(y))           
+        self.geoTransform = (self.x, self.cellSize[0], 0.0, self.y, 0.0, self.cellSize[1])         
         
     #Import hyperspectral data (ENVI format)
     def _load_hyperspectral(self, headerfilepath, imagefilepath):
@@ -358,12 +342,12 @@ class pyTiff(object):
 #Right now the code relies on an accurate epsg code being used. Need to have auto projection available
 
 #b = pyTiff("OWK-BASIN2-2M-AVG-BATHY1.tif")
-b = pyTiff(".\\data\\KoeyeImagerySubset.tif")
+#b = pyTiff(".\\data\\KoeyeImagerySubset.tif")
 #b = pyTiff(".\data\samson_1.img", hyperspectral=True)
-#b = pyTiff("IMG_0012_1.tif")
+b = pyTiff(".\data\IMG_0012_1.tif")
 #b = pyTiff('test.tif')
 #b.image_from_bands(0,1,2)
-b.write_bands_to_tiff([2], epsg=26909)
+b.write_bands_to_tiff(0, epsg=26909)
 #For testing purposes:
         #32610 = wgs84 utm10N
         #26909 = nad83 utm9N
