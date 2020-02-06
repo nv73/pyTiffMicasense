@@ -11,7 +11,7 @@ Requires the following packages:
 	pyproj
 	spectral
 	
-All packages can be installed in Anaconda (open as adminisrator) via:
+All packages can be installed in Anaconda (open as administrator) via:
 
 	conda install -c conda-forge package_name
 	
