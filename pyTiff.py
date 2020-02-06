@@ -5,14 +5,13 @@ import os
 import osr
 import exifread
 import pyproj
+import spectral.io.envi as envi
 
 class pyTiff(object):
 
-    def __init__(self, filename, QtTools = False):
+    def __init__(self, filename, QtTools = False, hyperspectral=False):
 
         self.filename = filename
-
-        self.tiff = gdal.Open(filename)
 
         self.geodetics = None
 
@@ -34,8 +33,13 @@ class pyTiff(object):
 
         self.rotations = None
 
-        #leaving a default of wgs84
+        self.worldfile = None
+        
+        self.meta = None
+
         self.epsg = 4326
+
+        self.imageSize = None
 
         #Qt tools take up a lot of space and can use
         #a lot of runtime importing. 
@@ -49,26 +53,43 @@ class pyTiff(object):
 
                 print("PyQt4 Packages not installed.")
 
-        self.load_tif()
+        if hyperspectral == False:
 
-        #Generate a world file if none is found.
-        #This still requires EXIF data to exist within the data
-        self.worldfile = os.path.splitext(filename)[0] + ".tfw"
+            self.tiff = gdal.Open(self.filename)
 
-        self.meta = self.get_metadata(self.filename)
+            self.load_tif()
 
-        if self.worldfile not in os.listdir('.'):
+            self.get_world_file(self.filename)
 
-            print("World file not found. Attempting to create...")
+        else:
+
+            headerfilename = filename + '.hdr'
+
+            self.load_hyperspectral(headerfilename, filename)
+
+            self.decode_envi_header(headerfilename)
+
+    #checks for a world file (.tfw). Creates one if none exist.
+    def get_world_file(self, filename):
+
+        fname = str(filename)
+        
+        self.worldfile = os.path.splitext(filename[0] + ".tfw")
+
+        self.meta = self.get_metadata(filename)
+
+        filepath = '\\'.join(filename.split('\\')[0:-1])
+
+        if os.path.basename(str(self.worldfile)) not in os.listdir(filepath):
 
             try:
-                
+
                 self.make_world_file()
 
             except:
 
-                print("This image has no metadata.")
-
+                pass
+            
     #Extract the metadata from a file.
     #Used in the case that no tfw file exists with the data,
     #but EXIF info is provided.
@@ -217,12 +238,12 @@ class pyTiff(object):
         #Initialize the GeoTiff file to which the data will be written to
         outRaster = gdal.GetDriverByName("GTiff").Create(filename,
                                                          self.bands[0].shape[1],
-                                                         self.bands[0].shape[1],
-                                                         b, gdal.GDT_Float32)
+                                                         self.bands[0].shape[0],
+                                                         len(bands), gdal.GDT_UInt16)
 
         #Apply offsets, rotations, and resolution to the dataset
         outRaster.SetGeoTransform(self.geoTransform)
-
+        
         #Initialize a spatial reference system
         srs = osr.SpatialReference()
 
@@ -283,14 +304,57 @@ class pyTiff(object):
             file.write(str(resx) + '\n' + str(rot1) + '\n' + str(rot2) + '\n' +
                        str(resy) + '\n' + str(x) + '\n' + str(y))           
         
-    def load_hyperspectral(self):
+    #Import hyperspectral data (ENVI format)
+    def load_hyperspectral(self, headerfilepath, imagefilepath):
 
-        pass
+        #Open the header and image files
+        hsData = envi.open(headerfilepath, imagefilepath)
+
+        #Load the data into an array
+        hsArray = hsData.load()
+
+        #Get image dimensions
+        x,y,bands = hsArray.shape
+
+        self.numberOfBands = bands
+        self.imageSize = (x,y)
+
+        print(self.imageSize)
+        #Store each band to a class variable
+        for x in range(bands):
+
+            band2D = hsArray[:,:,x].reshape(self.imageSize[0], self.imageSize[1])
+
+            self.bands.append(band2D)
+
+    def decode_envi_header(self, headerfilepath):
+
+        hdr = envi.open(headerfilepath)
+        
+        header = envi.read_envi_header(headerfilepath)
+
+        geodetics = header['map info']
+        coord_system = header['coordinate system string']
+
+        #values required for geoTransform
+        self.x = float(geodetics[3])
+        self.y = float(geodetics[4])
+        self.cellSize = (float(geodetics[5]),float(geodetics[6]))       
+        
+        zone = geodetics[7]
+        datum = geodetics[9]
+        units = geodetics[10].split('=')[1]
+
+        self.geoTransform = (self.x, self.cellSize[0], 0.0, self.y, 0.0, self.cellSize[1])
+        
+        print(self.geoTransform)
+
 
 #b = pyTiff("OWK-BASIN2-2M-AVG-BATHY1.tif")
-b = pyTiff("KoeyeImagerySubset.tif")
+#b = pyTiff(".\\data\\KoeyeImagerySubset.tif")
+b = pyTiff(".\data\samson_1.img", hyperspectral=True)
 #b = pyTiff("IMG_0012_1.tif")
 #b = pyTiff('test.tif')
 #b.image_from_bands(0)
 #b.raster_from_bands()
-b.write_array_to_tiff(0,1,2,epsg=3005)
+b.write_bands_to_tiff(bands=[15,55,154,43,2,78],epsg=26910)
