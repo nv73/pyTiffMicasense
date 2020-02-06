@@ -352,9 +352,12 @@ class pyTiff(object):
 
 #b = pyTiff("OWK-BASIN2-2M-AVG-BATHY1.tif")
 #b = pyTiff(".\\data\\KoeyeImagerySubset.tif")
-b = pyTiff(".\data\samson_1.img", hyperspectral=True)
+#b = pyTiff(".\data\samson_1.img", hyperspectral=True)
 #b = pyTiff("IMG_0012_1.tif")
 #b = pyTiff('test.tif')
 #b.image_from_bands(0)
 #b.raster_from_bands()
+#For testing purposes:
+        #32610 = wgs84 utm10N
+        #26909 = nad83 utm9N
 b.write_bands_to_tiff(bands=[15,55,154,43,2,78],epsg=32610)
