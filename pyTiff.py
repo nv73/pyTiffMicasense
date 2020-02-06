@@ -57,7 +57,7 @@ class pyTiff(object):
 
             self.tiff = gdal.Open(self.filename)
 
-            self.load_tif()
+            self._load_tif()
 
             self.get_world_file(self.filename)
 
@@ -65,9 +65,9 @@ class pyTiff(object):
 
             headerfilename = filename + '.hdr'
 
-            self.load_hyperspectral(headerfilename, filename)
+            self._load_hyperspectral(headerfilename, filename)
 
-            self.decode_envi_header(headerfilename)
+            self._decode_envi_header(headerfilename)
 
     #checks for a world file (.tfw). Creates one if none exist.
     def get_world_file(self, filename):
@@ -84,7 +84,7 @@ class pyTiff(object):
 
             try:
 
-                self.make_world_file()
+                self._make_world_file()
 
             except:
 
@@ -105,7 +105,7 @@ class pyTiff(object):
     #Note that the file itself is loaded once the object is instantiated,
     #this function merely extracts the required data and saves it as
     #class variables.
-    def load_tif(self):
+    def _load_tif(self):
 
         tiff = self.tiff
 
@@ -171,7 +171,14 @@ class pyTiff(object):
     #Defaults to WGS84, UTM 9N, Western hemisphere (Vancouver Island, BC)
     def geo_to_utm(self, lat, lon, utmzone=9, ellipse='WGS84', hemi='W'):
 
-        longitude = lon * -1
+        if hemi == 'W':
+            
+            longitude = lon * -1
+
+        else:
+
+            longitude = lon
+            
         latitude = lat
 
         proj = pyproj.Proj(proj='utm',zone=str(utmzone),ellps=ellipse, preserve_units=False)
@@ -277,7 +284,7 @@ class pyTiff(object):
         outRaster.FlushCache()
 
     #Outputs a .tfw file to accompany a tif and provide georeferencing
-    def make_world_file(self):
+    def _make_world_file(self):
 
         #Load the exif metadata
         metadata = self.meta
@@ -305,7 +312,7 @@ class pyTiff(object):
                        str(resy) + '\n' + str(x) + '\n' + str(y))           
         
     #Import hyperspectral data (ENVI format)
-    def load_hyperspectral(self, headerfilepath, imagefilepath):
+    def _load_hyperspectral(self, headerfilepath, imagefilepath):
 
         #Open the header and image files
         hsData = envi.open(headerfilepath, imagefilepath)
@@ -329,7 +336,7 @@ class pyTiff(object):
             self.bands.append(band2D)
 
     #Load and decode the hyperspectral header file
-    def decode_envi_header(self, headerfilepath):
+    def _decode_envi_header(self, headerfilepath):
 
         #open the header file and load into a dictionary
         header = envi.read_envi_header(headerfilepath)
@@ -351,13 +358,13 @@ class pyTiff(object):
 #Right now the code relies on an accurate epsg code being used. Need to have auto projection available
 
 #b = pyTiff("OWK-BASIN2-2M-AVG-BATHY1.tif")
-#b = pyTiff(".\\data\\KoeyeImagerySubset.tif")
+b = pyTiff(".\\data\\KoeyeImagerySubset.tif")
 #b = pyTiff(".\data\samson_1.img", hyperspectral=True)
 #b = pyTiff("IMG_0012_1.tif")
 #b = pyTiff('test.tif')
-#b.image_from_bands(0)
-#b.raster_from_bands()
+#b.image_from_bands(0,1,2)
+b.write_bands_to_tiff([2], epsg=26909)
 #For testing purposes:
         #32610 = wgs84 utm10N
         #26909 = nad83 utm9N
-b.write_bands_to_tiff(bands=[15,55,154,43,2,78],epsg=32610)
+#b.write_bands_to_tiff(bands=[15,55,154,43,2,78],epsg=32610)
