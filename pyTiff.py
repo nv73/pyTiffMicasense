@@ -6,6 +6,10 @@ import osr
 import exifread
 import pyproj
 import spectral.io.envi as envi
+import sys
+
+
+######Scroll to the bottom to see how to use this! :)
 
 class pyTiff(object):
 
@@ -280,18 +284,22 @@ class pyTiff(object):
         #Dump the tiff data to a file.
         outRaster.FlushCache()
 
+    #Extract geo data from image EXIF and use it for Tiff georeferencing
     def georeference_from_metadata(self):
 
         metadata = self.meta
 
+        #Reformat the lat lon into DD.ddddddd
         lat = self._to_degrees(metadata["GPS GPSLatitude"])
         lon = self._to_degrees(metadata["GPS GPSLongitude"])
 
+        #Convert lat lon into x, y coordinates
         x,y = self.geo_to_utm(lat, lon)
 
         self.x = x
         self.y = y
 
+        #Build the geotransform based off the image EXIF data.
         self.geoTransform = (self.x, self.cellSize[0], 0.0, self.y, 0.0, self.cellSize[1])         
         
     #Import hyperspectral data (ENVI format)
@@ -343,11 +351,11 @@ class pyTiff(object):
 #b = pyTiff("OWK-BASIN2-2M-AVG-BATHY1.tif")
 #b = pyTiff(".\\data\\KoeyeImagerySubset.tif")
 #b = pyTiff(".\data\samson_1.img", hyperspectral=True)
-b = pyTiff(".\data\IMG_0012_1.tif",overrideResolution=0.25)
+#b = pyTiff(".\data\IMG_0012_1.tif",overrideResolution=0.25)
 #b = pyTiff('test.tif')
 #b.image_from_bands(0,1,2)
-b.write_bands_to_tiff(0, epsg=26909)
+#b.write_bands_to_tiff(0, epsg=26909)
 #For testing purposes:
         #32610 = wgs84 utm10N
         #26909 = nad83 utm9N
-#b.write_bands_to_tiff(bands=[15,55,154,43,2,78],epsg=32610)
+#b.write_bands_to_tiff(bands=[15,55,22,43,2,78],epsg=32610)
