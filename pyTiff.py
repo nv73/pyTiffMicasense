@@ -253,7 +253,7 @@ class pyTiff(object):
 
         #Apply the reference system to the tiff file
         outRaster.SetProjection(srs.ExportToWkt())
-
+        
         #Add the array dataset to the tiff file
         #If bands == 0, add all bands to the output tiff
         #Otherwise, add the input bands only to the output tiff
@@ -319,36 +319,36 @@ class pyTiff(object):
         self.numberOfBands = bands
         self.imageSize = (x,y)
 
-        print(self.imageSize)
         #Store each band to a class variable
         for x in range(bands):
 
+            #Reshape the hyperspectral data slice into a 2d array
             band2D = hsArray[:,:,x].reshape(self.imageSize[0], self.imageSize[1])
 
+            #add the data slice to the band list
             self.bands.append(band2D)
 
+    #Load and decode the hyperspectral header file
     def decode_envi_header(self, headerfilepath):
 
-        hdr = envi.open(headerfilepath)
-        
+        #open the header file and load into a dictionary
         header = envi.read_envi_header(headerfilepath)
 
+        #Extract the map info and coordinate system tags.
+        #The coordinate system tag is not currently used, but I will
+        #likely remove it in the future.
         geodetics = header['map info']
         coord_system = header['coordinate system string']
 
         #values required for geoTransform
         self.x = float(geodetics[3])
         self.y = float(geodetics[4])
-        self.cellSize = (float(geodetics[5]),float(geodetics[6]))       
-        
-        zone = geodetics[7]
-        datum = geodetics[9]
-        units = geodetics[10].split('=')[1]
+        self.cellSize = (float(geodetics[5]),float(geodetics[6]))
 
+        #Build the geoTransform required for exporting georeferenced tiffs
         self.geoTransform = (self.x, self.cellSize[0], 0.0, self.y, 0.0, self.cellSize[1])
-        
-        print(self.geoTransform)
 
+#Right now the code relies on an accurate epsg code being used. Need to have auto projection available
 
 #b = pyTiff("OWK-BASIN2-2M-AVG-BATHY1.tif")
 #b = pyTiff(".\\data\\KoeyeImagerySubset.tif")
@@ -357,4 +357,4 @@ b = pyTiff(".\data\samson_1.img", hyperspectral=True)
 #b = pyTiff('test.tif')
 #b.image_from_bands(0)
 #b.raster_from_bands()
-b.write_bands_to_tiff(bands=[15,55,154,43,2,78],epsg=26910)
+b.write_bands_to_tiff(bands=[15,55,154,43,2,78],epsg=32610)
