@@ -59,15 +59,16 @@ class pyTiff(object):
 
             self._load_tif()
 
+            if overrideResolution > 0:
+
+                self.cellSize = (overrideResolution, overrideResolution)
+                print(self.cellSize)
+
             if self.geoTransform[0] == 0.0:
 
                 self.meta = self.get_metadata(self.filename)
 
                 self.georeference_from_metadata()
-
-            if overrideResolution > 0:
-
-                self.cellSize == overRideResolution
 
         else:
 
@@ -108,8 +109,6 @@ class pyTiff(object):
         self.geodetics = geodetics
 
         self.geoTransform = tiff.GetGeoTransform()
-
-        print(self.geoTransform)
 
         self.x = self.geoTransform[0]
 
@@ -344,7 +343,7 @@ class pyTiff(object):
 #b = pyTiff("OWK-BASIN2-2M-AVG-BATHY1.tif")
 #b = pyTiff(".\\data\\KoeyeImagerySubset.tif")
 #b = pyTiff(".\data\samson_1.img", hyperspectral=True)
-b = pyTiff(".\data\IMG_0012_1.tif")
+b = pyTiff(".\data\IMG_0012_1.tif",overrideResolution=0.25)
 #b = pyTiff('test.tif')
 #b.image_from_bands(0,1,2)
 b.write_bands_to_tiff(0, epsg=26909)
