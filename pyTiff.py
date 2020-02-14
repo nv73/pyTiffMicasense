@@ -348,14 +348,17 @@ class pyTiff(object):
 
 #Right now the code relies on an accurate epsg code being used. Need to have auto projection available
 
-#b = pyTiff("OWK-BASIN2-2M-AVG-BATHY1.tif")
-#b = pyTiff(".\\data\\KoeyeImagerySubset.tif")
-#b = pyTiff(".\data\samson_1.img", hyperspectral=True)
-#b = pyTiff(".\data\IMG_0012_1.tif",overrideResolution=0.25)
-#b = pyTiff('test.tif')
-#b.image_from_bands(0,1,2)
-#b.write_bands_to_tiff(0, epsg=26909)
-#For testing purposes:
+if __name__ == "__main__":
+
+    #b = pyTiff("OWK-BASIN2-2M-AVG-BATHY1.tif")
+    #b = pyTiff(".\\data\\KoeyeImagerySubset.tif")
+    #b = pyTiff(".\data\samson_1.img", hyperspectral=True)
+    #b = pyTiff(".\data\IMG_0012_1.tif",overrideResolution=0.25)
+    #b = pyTiff('test.tif')
+    #b.image_from_bands(0,1,2)
+    #b.write_bands_to_tiff(0, epsg=26909)
+    #For testing purposes:
         #32610 = wgs84 utm10N
         #26909 = nad83 utm9N
-#b.write_bands_to_tiff(bands=[15,55,22,43,2,78],epsg=32610)
+    #b.write_bands_to_tiff(bands=[15,55,22,43,2,78],epsg=32610)
+    pass
