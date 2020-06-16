@@ -1,0 +1,35 @@
+--------------------------------------------------------------
+Running pyTiff: Micasense on HAKAI-417-MUSTA
+Written by Nick Viner (Hakai Institute, 2020)
+Contact nick.viner@hakai.org for questions or assistance
+Current Date / Time: 2020-06-05 11:16:47.568623
+Imported image C:/Users/nick.viner/Documents/GitHub/pyTiff/data/Tiffs/5Band/IMG_0012_1.tif
+Imported panel C:/Users/nick.viner/Documents/GitHub/pyTiff/data/Tiffs/5Band/IMG_0001_5.tif
+Added image C:/Users/nick.viner/Documents/GitHub/pyTiff/data/Tiffs/5Band/IMG_0012_2.tif to band 2
+Added image C:/Users/nick.viner/Documents/GitHub/pyTiff/data/Tiffs/5Band/IMG_0012_3.tif to band 3
+Added image C:/Users/nick.viner/Documents/GitHub/pyTiff/data/Tiffs/5Band/IMG_0012_4.tif to band 4
+Added image C:/Users/nick.viner/Documents/GitHub/pyTiff/data/Tiffs/5Band/IMG_0012_5.tif to band 5
+--------------------------------------------------------------
+Running pyTiff: Micasense on HAKAI-417-MUSTA
+Written by Nick Viner (Hakai Institute, 2020)
+Contact nick.viner@hakai.org for questions or assistance
+Current Date / Time: 2020-06-05 11:27:07.345000
+Imported image C:/Users/nick.viner/Documents/GitHub/pyTiff/data/Tiffs/5Band/IMG_0012_1.tif
+Imported panel C:/Users/nick.viner/Documents/GitHub/pyTiff/data/Tiffs/5Band/IMG_0001_5.tif
+Added image C:/Users/nick.viner/Documents/GitHub/pyTiff/data/Tiffs/5Band/IMG_0012_2.tif to band 2
+Added image C:/Users/nick.viner/Documents/GitHub/pyTiff/data/Tiffs/5Band/IMG_0012_3.tif to band 3
+Added image C:/Users/nick.viner/Documents/GitHub/pyTiff/data/Tiffs/5Band/IMG_0012_4.tif to band 4
+Added image C:/Users/nick.viner/Documents/GitHub/pyTiff/data/Tiffs/5Band/IMG_0012_5.tif to band 5
+--------------------------------------------------------------
+Running pyTiff: Micasense on HAKAI-417-MUSTA
+Written by Nick Viner (Hakai Institute, 2020)
+Contact nick.viner@hakai.org for questions or assistance
+Current Date / Time: 2020-06-05 11:42:02.965363
+--------------------------------------------------------------
+Running pyTiff: Micasense on HAKAI-417-MUSTA
+Written by Nick Viner (Hakai Institute, 2020)
+Contact nick.viner@hakai.org for questions or assistance
+Current Date / Time: 2020-06-05 11:52:57.458876
+Imported image C:/Users/nick.viner/Documents/GitHub/pyTiff/data/Tiffs/5Band/IMG_0012_1.tif
+Imported panel C:/Users/nick.viner/Documents/GitHub/pyTiff/data/Tiffs/5Band/IMG_0001_5.tif
+File merged_2020-06-05.tif written to C:\Users\nick.viner\Documents\GitHub\pyTiff

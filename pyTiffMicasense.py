@@ -19,8 +19,6 @@ import numpy as np
 import osr
 from datetime import datetime
 import os
-import tkinter
-import FileDialog
 
 class pyTiffMicasense_Form(QtWidgets.QMainWindow, pyTiffMicasense_ui.Ui_MainWindow):
     
@@ -193,11 +191,13 @@ class pyTiffMicasense_Form(QtWidgets.QMainWindow, pyTiffMicasense_ui.Ui_MainWind
                                  
         fileList = []
         
+        fileName = "merged_%s.tif" % str(datetime.now())[:10]
+        
         for x in range(1, self.bandCount + 1):
             
             fileList.append(self.image[x].tiff.ReadAsArray())
         
-        outRaster = gdal.GetDriverByName("GTiff").Create("Test.tif", self.image[1].reflectanceImage.shape[1], 
+        outRaster = gdal.GetDriverByName("GTiff").Create(fileName, self.image[1].reflectanceImage.shape[1], 
                                                          self.image[1].reflectanceImage.shape[0], self.bandCount, gdal.GDT_Float32)
         
         for x in range(0, self.bandCount):
@@ -211,6 +211,8 @@ class pyTiffMicasense_Form(QtWidgets.QMainWindow, pyTiffMicasense_ui.Ui_MainWind
         srs.ImportFromEPSG(self.image[1].epsg)
         
         outRaster.SetProjection(srs.ExportToWkt())
+        
+        self.log("File %s written to %s" % (fileName, str(os.getcwd())))
         
     def radianceToReflectance(self):
         
