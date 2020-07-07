@@ -27,26 +27,30 @@ COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
 IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 """
-import os, glob, fnmatch
-import micasense.image as image
-import micasense.capture as capture
-from micasense.imageutils import save_capture as save_capture
+import fnmatch
 import multiprocessing
+import os
 
 import exiftool
+
+import micasense.capture as capture
+import micasense.image as image
+from micasense.imageutils import save_capture as save_capture
 
 
 def image_from_file(filename):
     return image.Image(filename)
 
+
 class ImageSet(object):
     """
     An ImageSet is a container for a group of captures that are processed together
     """
+
     def __init__(self, captures):
         self.captures = captures
         captures.sort()
-        
+
     @classmethod
     def from_directory(cls, directory, progress_callback=None, exiftool_path=None):
         """
@@ -64,10 +68,10 @@ class ImageSet(object):
             exiftool_path = os.path.normpath(os.environ.get('exiftoolpath'))
 
         with exiftool.ExifTool(exiftool_path) as exift:
-            for i,path in enumerate(matches):
+            for i, path in enumerate(matches):
                 images.append(image.Image(path, exiftool_obj=exift))
                 if progress_callback is not None:
-                    progress_callback(float(i)/float(len(matches)))
+                    progress_callback(float(i) / float(len(matches)))
 
         # create a dictionary to index the images so we can sort them
         # into captures
@@ -89,24 +93,24 @@ class ImageSet(object):
         if progress_callback is not None:
             progress_callback(1.0)
         return cls(captures)
-    
+
     def as_nested_lists(self):
         columns = [
             'timestamp',
-            'latitude','longitude','altitude',
+            'latitude', 'longitude', 'altitude',
             'capture_id',
-            'dls-yaw','dls-pitch','dls-roll'
+            'dls-yaw', 'dls-pitch', 'dls-roll'
         ]
         irr = ["irr-{}".format(wve) for wve in self.captures[0].center_wavelengths()]
         columns += irr
-        data = [] 
+        data = []
         for cap in self.captures:
             dat = cap.utc_time()
             loc = list(cap.location())
             uuid = cap.uuid
             dls_pose = list(cap.dls_pose())
             irr = cap.dls_irradiance()
-            row = [dat]+loc+[uuid]+dls_pose+irr
+            row = [dat] + loc + [uuid] + dls_pose + irr
             data.append(row)
         return data, columns
 
@@ -117,8 +121,9 @@ class ImageSet(object):
             irr = cap.dls_irradiance()
             series[dat] = irr
 
-    def save_stacks(self, warp_matrices, stackDirectory, thumbnailDirectory=None, irradiance=None, multiprocess=True, overwrite=False, progress_callback=None):
-        
+    def save_stacks(self, warp_matrices, stackDirectory, thumbnailDirectory=None, irradiance=None, multiprocess=True,
+                    overwrite=False, progress_callback=None):
+
         if not os.path.exists(stackDirectory):
             os.makedirs(stackDirectory)
         if thumbnailDirectory is not None and not os.path.exists(thumbnailDirectory):
@@ -138,12 +143,11 @@ class ImageSet(object):
 
         if multiprocess:
             pool = multiprocessing.Pool(processes=multiprocessing.cpu_count())
-            for i,_ in enumerate(pool.imap_unordered(save_capture, save_params_list)):
+            for i, _ in enumerate(pool.imap_unordered(save_capture, save_params_list)):
                 if progress_callback is not None:
-                    progress_callback(float(i)/float(len(save_params_list)))
+                    progress_callback(float(i) / float(len(save_params_list)))
             pool.close()
             pool.join()
         else:
             for params in save_params_list:
                 save_capture(params)
-

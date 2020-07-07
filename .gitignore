@@ -9,3 +9,10 @@ IMG_0012_1.tif
 *.ovr
 data/IMG_0012_1.tif.aux.xml
 data/IMG_0012_1.proc.tif.aux.xml
+__pycache__/
+.idea/
+dist/
+build/
+*.spec
+*.pyc
+*_log.txt

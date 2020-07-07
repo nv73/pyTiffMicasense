@@ -6,7 +6,8 @@
 #
 # WARNING! All changes made in this file will be lost!
 
-from PyQt5 import QtCore, QtGui, QtWidgets
+from PyQt5 import QtCore, QtWidgets
+
 
 class Ui_viewText(object):
     def setupUi(self, viewText):
@@ -32,10 +33,10 @@ class Ui_viewText(object):
 
 if __name__ == "__main__":
     import sys
+
     app = QtWidgets.QApplication(sys.argv)
     viewText = QtWidgets.QWidget()
     ui = Ui_viewText()
     ui.setupUi(viewText)
     viewText.show()
     sys.exit(app.exec_())
-

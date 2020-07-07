@@ -7,6 +7,8 @@
 # WARNING! All changes made in this file will be lost!
 
 
+import sys
+
 from PyQt5 import QtCore, QtGui, QtWidgets
 
 
@@ -387,7 +389,7 @@ class Ui_MainWindow(object):
         self.fileGeoLocationY.setObjectName("fileGeoLocationY")
         self.verticalLayout.addWidget(self.fileGeoLocationY)
         self.label_4 = QtWidgets.QLabel(self.infoFrame)
-        self.label_4.setAlignment(QtCore.Qt.AlignLeading|QtCore.Qt.AlignLeft|QtCore.Qt.AlignVCenter)
+        self.label_4.setAlignment(QtCore.Qt.AlignLeading | QtCore.Qt.AlignLeft | QtCore.Qt.AlignVCenter)
         self.label_4.setObjectName("label_4")
         self.verticalLayout.addWidget(self.label_4)
         self.fileGeoLocationLat = QtWidgets.QLineEdit(self.infoFrame)
@@ -764,7 +766,6 @@ class Ui_MainWindow(object):
 
 
 if __name__ == "__main__":
-    import sys
     app = QtWidgets.QApplication(sys.argv)
     MainWindow = QtWidgets.QMainWindow()
     ui = Ui_MainWindow()
