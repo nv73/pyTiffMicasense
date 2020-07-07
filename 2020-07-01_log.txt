@@ -1,0 +1,5 @@
+--------------------------------------------------------------
+Running pyTiff: Micasense on HAKAI-417-MUSTA
+Written by Nick Viner (Hakai Institute, 2020)
+Contact nick.viner@hakai.org for questions or assistance
+Current Date / Time: 2020-07-01 21:04:48.287915
