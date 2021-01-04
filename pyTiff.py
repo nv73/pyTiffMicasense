@@ -23,42 +23,25 @@ from micasense.panel import Panel
 class pyTiff(object):
 
     def __init__(self, filename, QtTools=False, hyperspectral=False, overrideResolution=0, calibPanel=None,
-                 micasense=False, exiftoolpath=os.popen("command -v exiftool").read().strip(), epsg=26909):
+                 micasense=False, exiftoolpath=os.environ['exiftoolpath'], epsg=26909):
 
         self.filename = filename
-
         self.geodetics = None
-
         self.x = 0
-
         self.y = 0
-
         self.bands = []
-
         self.numberOfBands = 0
-
         self.hasWorldFile = True
-
         self.image = None
-
         self.cellSize = None
-
         self.geoTransform = None
-
         self.rotations = None
-
         self.worldfile = None
-
         self.meta = None
-
         self.epsg = epsg
-
         self.imageSize = None
-
         self.calibrationImagePath = calibPanel
-
-        self.calibrationValues = None
-
+        self.calibrationValues = {"Blue": 0.54,"Green": 0.55,"Red": 0.54,"Red edge": 0.52,"NIR": 0.48}
         self.panel = None
 
         self.isMicasense = micasense
@@ -86,9 +69,11 @@ class pyTiff(object):
             self._load_tif()
 
             if overrideResolution > 0:
+                
                 self.cellSize = (overrideResolution, overrideResolution)
 
             if self.geoTransform[0] == 0.0:
+                
                 self.meta = self.get_metadata(self.filename)
 
                 self.georeference_from_metadata()
@@ -103,13 +88,26 @@ class pyTiff(object):
 
     ###The following 4 functions are specific to images taken by micasense cameras.###
 
+    def estimate_CellSize(self, metadata, imagerWidth=4.8):
+        
+        meta = metadata
+        
+        width = meta.get_item("EXIF:ImageWidth")
+        height = meta.get_item("EXIF:GPSAltitude")
+        focalLength = meta.get_item("EXIF:FocalLength")
+        fov = meta.get_item("Composite:FOV")
+                
+        cs = (imagerWidth * (height * 100)) / (focalLength * width)
+        
+        return(cs / 100)
+    
     # Get calibration values from an image of the micasense calibration panel
-    def get_calibration(self, plot=False):
+    def get_calibration(self, plot=False, calVals=None):
 
         imgPath = self.calibrationImagePath
         img = plt.imread(self.calibrationImagePath)
         meta = micaMetadata.Metadata(imgPath, self.exiftoolpath)
-
+        
         # Generate radiance image
         calib_rads = self.raw_to_rad(meta, img)
 
@@ -131,20 +129,18 @@ class pyTiff(object):
         # Mean radiance value within the panel
         meanRadiance = panelRegion.mean()
         print("Mean Radiance in panel region: %f" % meanRadiance)
-
+        
         # Calibration values
         bandName = meta.get_item('XMP:BandName')
-
-        panelCalibration = {
-            "Blue": 0.54,
-            "Green": 0.55,
-            "Red": 0.54,
-            "Red edge": 0.52,
-            "NIR": 0.48
-        }
-
-        panelReflectance = panelCalibration[bandName]
-
+        
+        print(bandName)
+        
+        if calVals != None:
+            
+            self.calibrationValues[bandName] = calVals
+                
+        panelReflectance = self.calibrationValues[bandName]
+        
         radianceToReflectance = panelReflectance / meanRadiance
         print("Radiance to Reflection conversion factor: {:1.3f}".format(radianceToReflectance))
 
@@ -167,7 +163,6 @@ class pyTiff(object):
             plotutils.plotwithcolorbar(gaussianPlot, 'Panel Region with Gaussian Blur')
             plotutils.plotwithcolorbar(undistortedReflectance, 'Undistorted Reflectance')
 
-        self.calibrationValues = panelCalibration
         self.calibrationValues["meanPanelRadiance"] = meanRadiance
 
         self.scaleFactor = radianceToReflectance
@@ -186,15 +181,10 @@ class pyTiff(object):
         bands = 0
 
         scaleFactor = self.scaleFactor
-
         img_raw = plt.imread(self.filename)
-
         meta = micaMetadata.Metadata(self.filename, exiftoolPath=self.exiftoolpath)
-
         img_rad, _, _, _ = utils.raw_image_to_radiance(meta, img_raw)
-
         img_ref = img_rad * scaleFactor
-
         img_ref_undist = utils.correct_lens_distortion(meta, img_ref)
 
         self.reflectanceImage = img_ref_undist
@@ -241,12 +231,20 @@ class pyTiff(object):
             tags = exifread.process_file(image)
 
             return (tags)
+        
+            print(tags)
 
         else:
 
             meta = micaMetadata.Metadata(filename, exiftoolPath=self.exiftoolpath)
 
             return (meta)
+        
+    def get_micaMetaData(self):
+        
+        meta = micaMetadata.Metadata(self.filename, exiftoolPath=self.exiftoolpath)
+        
+        return(meta)
 
     ###End micasense functions#######################################################
 
@@ -269,12 +267,22 @@ class pyTiff(object):
         self.geodetics = geodetics
 
         self.geoTransform = tiff.GetGeoTransform()
-
+        
         self.x = self.geoTransform[0]
 
         self.y = self.geoTransform[3]
+        
+        if self.isMicasense == True:
+            
+            meta = self.get_micaMetaData()
+            
+            cs = self.estimate_CellSize(meta)
+            
+            self.cellSize = (cs, cs)
+            
+        else:
 
-        self.cellSize = (self.geoTransform[1], self.geoTransform[5])
+            self.cellSize = (self.geoTransform[1], self.geoTransform[5])
 
         self.rotations = (self.geoTransform[2], self.geoTransform[4])
 

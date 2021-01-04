@@ -38,23 +38,26 @@ class pyTiffMicasense_Form(QtWidgets.QMainWindow, pyTiffMicasense_ui.Ui_MainWind
         self.log("Contact nick.viner@hakai.org for questions or assistance")
 
         self.log("Current Date / Time: %s" % str(datetime.now()))
+        
+        self.log("--------------------------------------------------------------")
 
         # Connecting UI objects to their corresponding functions
         self.actionImport.triggered.connect(self.importImage)
-
         self.actionAdd_Band.triggered.connect(self.addBand)
-
         self.actionMerge_Bands_to_Raster.triggered.connect(self.mergeBands)
-
         self.actionRadiance_to_Reflectance.triggered.connect(self.radianceToReflectance)
-
         self.actionViewGeodetics.clicked.connect(self.showGeodetics)
-
         self.actionViewCameraInfo.clicked.connect(self.showCameraInfo)
-
         self.bandSelectBox.activated.connect(self.updateBandView)
-
         self.actionImport_Calibration_Panel.triggered.connect(self.importCalibrationPanel)
+        self.menuProcess.setEnabled(False)
+        self.actionImport_Calibration_Panel.setEnabled(False)      
+        self.actionMerge_Bands_to_Raster.setEnabled(False)        
+        self.blueValText.editingFinished.connect(self.updateCalibrationValues)       
+        self.greenValText.editingFinished.connect(self.updateCalibrationValues)        
+        self.redValText.editingFinished.connect(self.updateCalibrationValues)        
+        self.redEdgeValText.editingFinished.connect(self.updateCalibrationValues)        
+        self.nearInfraredValText.editingFinished.connect(self.updateCalibrationValues)
 
         # Container for image. Using dictionary allows for multiple bands to be added
         self.image = {}
@@ -74,12 +77,23 @@ class pyTiffMicasense_Form(QtWidgets.QMainWindow, pyTiffMicasense_ui.Ui_MainWind
         self.panelFigureCanvas = FigureCanvasQt(self.panelFigure)
         self.calibrationGraphicsView.addWidget(self.panelFigureCanvas)
         self.panelAx = None
+        
+        # Zero the initial calibration panel values
+        self.redValText.setText("0.0")
+        self.greenValText.setText("0.0")
+        self.blueValText.setText("0.0")
+        self.redEdgeValText.setText("0.0")
+        self.nearInfraredValText.setText("0.0")
 
         ####
 
         self.reflectance = {}
 
         self.calibrationPanelPath = None
+        
+        self.calibrationPanels = {}
+        
+        self.calibrationValues = {"Blue": 0.54,"Green": 0.55,"Red": 0.54,"Red edge": 0.52,"NIR": 0.48}
 
         self.resolution = 0.0839
 
@@ -88,6 +102,16 @@ class pyTiffMicasense_Form(QtWidgets.QMainWindow, pyTiffMicasense_ui.Ui_MainWind
         self.conversionValue = 0
 
         self.checkForReflectance = False
+        
+    def updateCalibrationValues(self):
+
+        self.calibrationValues["Red"] = float(self.redValText.text())
+        self.calibrationValues["Blue"] = float(self.blueValText.text())
+        self.calibrationValues["Green"] = float(self.greenValText.text())
+        self.calibrationValues["Red edge"] = float(self.redEdgeValText.text())
+        self.calibrationValues["NIR"] = float(self.nearInfraredValText.text())
+        
+        print(self.calibrationValues)
 
     ### FILE DROP DOWN ###
 
@@ -107,25 +131,44 @@ class pyTiffMicasense_Form(QtWidgets.QMainWindow, pyTiffMicasense_ui.Ui_MainWind
             self, 'Select calibration panel image...', '', ".tif(*.tif)")
 
         self.calibrationPanelPath = c[0]
-
+        
+        self.calibrationPanels[1] = c[0]
+        
         # Load files to memory
         self.inputImage = plt.imread(f[0])
         self.inputCalibration = plt.imread(c[0])
 
         # Get user input resolution value
-        value, ok = QtWidgets.QInputDialog().getText(self, "Select Resolution",
-                                                     "Resolution (can be changed later):", QtWidgets.QLineEdit.Normal)
+        #value, ok = QtWidgets.QInputDialog().getText(self, "Select Resolution",
+         #                                            "Resolution (can be changed later):", QtWidgets.QLineEdit.Normal)
 
         # Check if value was entered, if not, set to 1
-        if ok and value:
-            self.resolution = float(value)
-        else:
-            self.resolution = 1
+        #if ok and value:
+            #self.resolution = float(value)
+        #else:
+            #self.resolution = 1
 
         # Generate pyTiff object and assign to dictionary
-        self.image[1] = pyTiff.pyTiff(filename=f[0], calibPanel=c[0], micasense=True,
-                                      overrideResolution=self.resolution)
-
+        self.image[1] = pyTiff.pyTiff(filename=f[0], calibPanel=c[0], micasense=True)
+        
+        imageMetadata = self.image[1].get_micaMetaData()
+        self.cameraNameText.setText(imageMetadata.get_item("EXIF:Model"))
+        
+        if imageMetadata.get_item("EXIF:Model") != "RedEdge-M":
+            
+            self.log("WARNING: CAMERA MODEL NOT REDEDGE-M, USING DEFAULT IMAGER SIZE DIMENSIONS.")
+            self.log("CHECK CAMERA TAB. CAN UPDATE VALUES IF NEED BE.")
+            self.log("CHECK YOUR MICASENSE CAMERA USER MANUAL FOR MORE INFO.")
+        
+        self.serialNumberText.setText(imageMetadata.get_item("XMP:Serial"))
+        w = imageMetadata.get_item("EXIF:ImageWidth")
+        h = imageMetadata.get_item("EXIF:ImageHeight")
+        wh = str(w) + " , " + str(h)
+        self.pixelResText.setText(wh)
+        self.focalLengthText.setText(str(imageMetadata.get_item("EXIF:FocalLength")))
+        self.fovText.setText(str(imageMetadata.get_item("Composite:FOV")))
+        self.imageResText.setText(str(self.image[1].cellSize[0]))
+       
         self.bandCount += 1
 
         self.log("Imported image %s" % f[0])
@@ -145,7 +188,7 @@ class pyTiffMicasense_Form(QtWidgets.QMainWindow, pyTiffMicasense_ui.Ui_MainWind
         self.imageFigureCanvas.draw()
 
         # Run the panel calibration
-        self.conversionValue = self.image[1].get_calibration()
+        #self.conversionValue = self.image[1].get_calibration()
 
         self.fileGeoLocationX.setText(str(self.image[1].x))
         self.fileGeoLocationY.setText(str(self.image[1].y))
@@ -157,33 +200,34 @@ class pyTiffMicasense_Form(QtWidgets.QMainWindow, pyTiffMicasense_ui.Ui_MainWind
         self.blueValText.setText(str(self.image[1].calibrationValues["Blue"]))
         self.greenValText.setText(str(self.image[1].calibrationValues["Green"]))
         self.redEdgeValText.setText(str(self.image[1].calibrationValues["Red edge"]))
-        self.nearInfraredValText.setText(str(self.image[1].calibrationValues["NIR"]))
-        self.panelRadianceText.setText(str(self.image[1].calibrationValues["meanPanelRadiance"]))
-        self.panelCornerText.setText(str(self.image[1].panel))
-
+        self.nearInfraredValText.setText(str(self.image[1].calibrationValues["NIR"]))    
+        self.menuProcess.setEnabled(True)
+        self.actionImport_Calibration_Panel.setEnabled(False)
+        
+        self.log("CALIBRATION PANEL VALUES ARE UNIQUE TO YOUR PANEL")
+        self.log("PLEASE ENSURE THE CALIBRATION VALUES MATCH THOSE PROVIDED BY THE MANUFACTURER")
+        
     def importCalibrationPanel(self):
 
         c = QtWidgets.QFileDialog.getOpenFileName(
             self, 'Select panel image to open...', '', ".tif(*.tif)")
 
         self.calibrationPanelPath = c[0]
-
+        
     ### PROCESS DROP DOWN ###
 
     def addBand(self):
-
+        
         f = QtWidgets.QFileDialog.getOpenFileName(
             self, 'Select image to open...', '', ".tif(*.tif)")
-
+        
+        c = QtWidgets.QFileDialog.getOpenFileName(
+            self, 'Select calibration panel...', '', ".tif(*.tif)")
+        
         self.bandCount += 1
-
-        self.image[self.bandCount] = pyTiff.pyTiff(filename=f[0], calibPanel=self.calibrationPanelPath,
-                                                   micasense=True, overrideResolution=self.resolution)
-
-        self.image[self.bandCount].get_calibration()
-
+        self.calibrationPanels[self.bandCount] = c[0]
+        self.image[self.bandCount] = pyTiff.pyTiff(filename=f[0], calibPanel=self.calibrationPanels[self.bandCount], micasense=True)
         self.bandSelectBox.addItem("Band %i" % self.bandCount)
-
         self.log("Added image %s to band %i" % (f[0], self.bandCount))
 
     def mergeBands(self):
@@ -193,6 +237,7 @@ class pyTiffMicasense_Form(QtWidgets.QMainWindow, pyTiffMicasense_ui.Ui_MainWind
         fileName = "merged_%s.tif" % str(datetime.now())[:10]
 
         for x in range(1, self.bandCount + 1):
+            
             fileList.append(self.image[x].tiff.ReadAsArray())
 
         outRaster = gdal.GetDriverByName("GTiff").Create(fileName, self.image[1].reflectanceImage.shape[1],
@@ -200,6 +245,7 @@ class pyTiffMicasense_Form(QtWidgets.QMainWindow, pyTiffMicasense_ui.Ui_MainWind
                                                          gdal.GDT_Float32)
 
         for x in range(0, self.bandCount):
+            
             outRaster.GetRasterBand(x + 1).WriteArray(fileList[x])
 
         outRaster.SetGeoTransform(self.image[1].geoTransform)
@@ -213,16 +259,30 @@ class pyTiffMicasense_Form(QtWidgets.QMainWindow, pyTiffMicasense_ui.Ui_MainWind
         self.log("File %s written to %s" % (fileName, str(os.getcwd())))
 
     def radianceToReflectance(self):
-
+        
+        checkCal = QtWidgets.QMessageBox()
+        
+        checkCalAnswer = checkCal.question(self,'',
+                                         "Quick Reminder: Have you double-checked your Calibration Panel values? Do they match the manufacture reported values?",
+                                         checkCal.Yes | checkCal.No)
+        
+        if checkCalAnswer == checkCal.No:
+            
+            return
+        
+        for i in self.image:
+                
+            self.image[i].get_calibration()
+            
+        self.panelRadianceText.setText(str(self.image[1].calibrationValues["meanPanelRadiance"]))
+        self.panelCornerText.setText(str(self.image[1].panel)) 
+        
         print('radiance to reflectance')
-
         saveImage = QtWidgets.QMessageBox.question(self, 'Save images to file?', 'Save image to file?',
                                                    QtWidgets.QMessageBox.Yes, QtWidgets.QMessageBox.No)
 
         if self.bandCount >= 1:
-
             if saveImage == QtWidgets.QMessageBox.No:
-
                 for x in range(1, self.bandCount + 1):
                     self.reflectance[x] = self.image[x].get_reflectance(write_to_file=False)
 
@@ -232,12 +292,11 @@ class pyTiffMicasense_Form(QtWidgets.QMainWindow, pyTiffMicasense_ui.Ui_MainWind
                     self.reflectance[x] = self.image[x].get_reflectance(write_to_file=True)
 
             self.imageAx.clear()
-
             self.imageAx.imshow(self.reflectance[1])
-
             self.imageFigureCanvas.draw()
-
             self.checkForReflectance = True
+            
+        self.actionMerge_Bands_to_Raster.setEnabled(True)
 
     def updateBandView(self):
 
@@ -274,7 +333,7 @@ class pyTiffMicasense_Form(QtWidgets.QMainWindow, pyTiffMicasense_ui.Ui_MainWind
             self.log("x, y: %f, %f" % (pos[0], pos[3]))
             self.log("lat, lon: %f, %f" % (self.image[1].lat, self.image[1].lon))
             self.log("EPSG Code: %s" % self.image[1].epsg)
-
+    
     def showCameraInfo(self):
 
         if len(self.image) == 0:
@@ -307,7 +366,24 @@ class pyTiffMicasense_Form(QtWidgets.QMainWindow, pyTiffMicasense_ui.Ui_MainWind
                 else:
 
                     self.log("%s: %s" % (x[5:], self.image[activeBand].meta.get_all()[x]))
-
+                    
+    #WORK ON THIS
+    def estimateCellSize(self, metadata):
+        
+        meta = metadata.get_all()
+        
+        width = meta.get_item("EXIF:ImageWidth")
+        height = meta.get_item("EXIF:ImageHeight")
+        focalLength = meta.get_item("EXIF:FocalLength")
+        fov = meta.get_item("Composite:FOV")
+        imgerSize = self.imagerWidthText.Text()
+        
+        cs = (imgerSize * height * 100) / (focalLength * width)
+        
+        print(cs)
+        
+        return(cs)
+        
     def log(self, inputText, saveLog=True):
         """Input text to be displayed in the GUI logging window"""
 

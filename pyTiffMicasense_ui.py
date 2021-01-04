@@ -2,15 +2,11 @@
 
 # Form implementation generated from reading ui file 'pyTiff.ui'
 #
-# Created by: PyQt5 UI code generator 5.12.3
+# Created by: PyQt5 UI code generator 5.9.2
 #
 # WARNING! All changes made in this file will be lost!
 
-
-import sys
-
 from PyQt5 import QtCore, QtGui, QtWidgets
-
 
 class Ui_MainWindow(object):
     def setupUi(self, MainWindow):
@@ -389,7 +385,7 @@ class Ui_MainWindow(object):
         self.fileGeoLocationY.setObjectName("fileGeoLocationY")
         self.verticalLayout.addWidget(self.fileGeoLocationY)
         self.label_4 = QtWidgets.QLabel(self.infoFrame)
-        self.label_4.setAlignment(QtCore.Qt.AlignLeading | QtCore.Qt.AlignLeft | QtCore.Qt.AlignVCenter)
+        self.label_4.setAlignment(QtCore.Qt.AlignLeading|QtCore.Qt.AlignLeft|QtCore.Qt.AlignVCenter)
         self.label_4.setObjectName("label_4")
         self.verticalLayout.addWidget(self.label_4)
         self.fileGeoLocationLat = QtWidgets.QLineEdit(self.infoFrame)
@@ -682,6 +678,62 @@ class Ui_MainWindow(object):
         self.formLayout_2.setWidget(13, QtWidgets.QFormLayout.FieldRole, self.label_18)
         self.horizontalLayout.addWidget(self.frame)
         self.tabWidget.addTab(self.Calibration, "")
+        self.tab = QtWidgets.QWidget()
+        self.tab.setObjectName("tab")
+        self.horizontalLayout_3 = QtWidgets.QHBoxLayout(self.tab)
+        self.horizontalLayout_3.setObjectName("horizontalLayout_3")
+        self.gridLayout_2 = QtWidgets.QGridLayout()
+        self.gridLayout_2.setObjectName("gridLayout_2")
+        self.label_23 = QtWidgets.QLabel(self.tab)
+        self.label_23.setObjectName("label_23")
+        self.gridLayout_2.addWidget(self.label_23, 1, 0, 1, 1)
+        self.imagerWidthText = QtWidgets.QLineEdit(self.tab)
+        self.imagerWidthText.setObjectName("imagerWidthText")
+        self.gridLayout_2.addWidget(self.imagerWidthText, 5, 3, 1, 1)
+        self.label_22 = QtWidgets.QLabel(self.tab)
+        self.label_22.setObjectName("label_22")
+        self.gridLayout_2.addWidget(self.label_22, 6, 0, 1, 1)
+        self.pixelResText = QtWidgets.QLineEdit(self.tab)
+        self.pixelResText.setObjectName("pixelResText")
+        self.gridLayout_2.addWidget(self.pixelResText, 2, 3, 1, 1)
+        self.serialNumberText = QtWidgets.QLineEdit(self.tab)
+        self.serialNumberText.setObjectName("serialNumberText")
+        self.gridLayout_2.addWidget(self.serialNumberText, 1, 3, 1, 1)
+        self.focalLengthText = QtWidgets.QLineEdit(self.tab)
+        self.focalLengthText.setObjectName("focalLengthText")
+        self.gridLayout_2.addWidget(self.focalLengthText, 3, 3, 1, 1)
+        self.label_8 = QtWidgets.QLabel(self.tab)
+        self.label_8.setObjectName("label_8")
+        self.gridLayout_2.addWidget(self.label_8, 2, 0, 1, 1)
+        self.label_19 = QtWidgets.QLabel(self.tab)
+        self.label_19.setObjectName("label_19")
+        self.gridLayout_2.addWidget(self.label_19, 3, 0, 1, 1)
+        self.cameraNameText = QtWidgets.QLineEdit(self.tab)
+        self.cameraNameText.setObjectName("cameraNameText")
+        self.gridLayout_2.addWidget(self.cameraNameText, 0, 3, 1, 1)
+        self.label_20 = QtWidgets.QLabel(self.tab)
+        self.label_20.setObjectName("label_20")
+        self.gridLayout_2.addWidget(self.label_20, 4, 0, 1, 1)
+        self.label = QtWidgets.QLabel(self.tab)
+        self.label.setObjectName("label")
+        self.gridLayout_2.addWidget(self.label, 0, 0, 1, 1)
+        self.fovText = QtWidgets.QLineEdit(self.tab)
+        self.fovText.setObjectName("fovText")
+        self.gridLayout_2.addWidget(self.fovText, 4, 3, 1, 1)
+        self.imagerHeightText = QtWidgets.QLineEdit(self.tab)
+        self.imagerHeightText.setObjectName("imagerHeightText")
+        self.gridLayout_2.addWidget(self.imagerHeightText, 6, 3, 1, 1)
+        self.label_21 = QtWidgets.QLabel(self.tab)
+        self.label_21.setObjectName("label_21")
+        self.gridLayout_2.addWidget(self.label_21, 5, 0, 1, 1)
+        self.imageResText = QtWidgets.QLineEdit(self.tab)
+        self.imageResText.setObjectName("imageResText")
+        self.gridLayout_2.addWidget(self.imageResText, 7, 3, 1, 1)
+        self.label_24 = QtWidgets.QLabel(self.tab)
+        self.label_24.setObjectName("label_24")
+        self.gridLayout_2.addWidget(self.label_24, 7, 0, 1, 1)
+        self.horizontalLayout_3.addLayout(self.gridLayout_2)
+        self.tabWidget.addTab(self.tab, "")
         self.gridLayout.addWidget(self.tabWidget, 0, 0, 1, 1)
         MainWindow.setCentralWidget(self.centralwidget)
         self.menubar = QtWidgets.QMenuBar(MainWindow)
@@ -690,6 +742,8 @@ class Ui_MainWindow(object):
         self.menuFile = QtWidgets.QMenu(self.menubar)
         self.menuFile.setObjectName("menuFile")
         self.menuProcess = QtWidgets.QMenu(self.menubar)
+        self.menuProcess.setEnabled(True)
+        self.menuProcess.setTearOffEnabled(False)
         self.menuProcess.setObjectName("menuProcess")
         MainWindow.setMenuBar(self.menubar)
         self.statusbar = QtWidgets.QStatusBar(MainWindow)
@@ -740,7 +794,7 @@ class Ui_MainWindow(object):
         self.actionViewGeodetics.setText(_translate("MainWindow", "View Geodetic Information"))
         self.label_7.setText(_translate("MainWindow", "Camera"))
         self.actionViewCameraInfo.setText(_translate("MainWindow", "View Camera Information"))
-        self.tabWidget.setTabText(self.tabWidget.indexOf(self.Main), _translate("MainWindow", "Main"))
+        self.tabWidget.setTabText(self.tabWidget.indexOf(self.Main), _translate("MainWindow", "Image"))
         self.label_9.setText(_translate("MainWindow", "Calibration Image Path"))
         self.label_10.setText(_translate("MainWindow", "Band Calibration Values "))
         self.label_11.setText(_translate("MainWindow", "Red"))
@@ -752,6 +806,17 @@ class Ui_MainWindow(object):
         self.label_17.setText(_translate("MainWindow", "Mean Panel Radiance"))
         self.label_18.setText(_translate("MainWindow", "Panel Corners"))
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.Calibration), _translate("MainWindow", "Calibration"))
+        self.label_23.setText(_translate("MainWindow", "Serial Number:"))
+        self.imagerWidthText.setText(_translate("MainWindow", "4.8"))
+        self.label_22.setText(_translate("MainWindow", "Imager Height (mm):"))
+        self.label_8.setText(_translate("MainWindow", "Output Pixel Resolution:"))
+        self.label_19.setText(_translate("MainWindow", "Focal Length (mm):"))
+        self.label_20.setText(_translate("MainWindow", "Lens Field of View (Deg):"))
+        self.label.setText(_translate("MainWindow", "Camera Name:"))
+        self.imagerHeightText.setText(_translate("MainWindow", "3.6"))
+        self.label_21.setText(_translate("MainWindow", "Imager Width (mm):"))
+        self.label_24.setText(_translate("MainWindow", "Estimated Image Resolution (m)"))
+        self.tabWidget.setTabText(self.tabWidget.indexOf(self.tab), _translate("MainWindow", "Camera"))
         self.menuFile.setTitle(_translate("MainWindow", "File"))
         self.menuProcess.setTitle(_translate("MainWindow", "Process"))
         self.actionImport.setText(_translate("MainWindow", "Import Single File"))
@@ -766,9 +831,11 @@ class Ui_MainWindow(object):
 
 
 if __name__ == "__main__":
+    import sys
     app = QtWidgets.QApplication(sys.argv)
     MainWindow = QtWidgets.QMainWindow()
     ui = Ui_MainWindow()
     ui.setupUi(MainWindow)
     MainWindow.show()
     sys.exit(app.exec_())
+
